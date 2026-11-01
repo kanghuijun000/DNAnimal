@@ -175,3 +175,6 @@ function animate(){
  renderer?.render(scene,camera);
 }
 init();
+// The classic game script can create the creature before this module finishes loading.
+// Replay the latest model once the 3D scene and its event listener are ready.
+if (window.__dnanimalCurrent) render(window.__dnanimalCurrent);
