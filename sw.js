@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dnanimal-cache-v3';
-const CORE = ['./','./index.html','./style.css?v=1','./script.js?v=3','./creature3d.js?v=2','./manifest.json','./icon.svg'];
+const CACHE_NAME = 'dnanimal-cache-v4';
+const CORE = ['./','./index.html','./style.css?v=2','./script.js?v=4','./creature3d.js?v=2','./manifest.json','./icon.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
 });
