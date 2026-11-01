@@ -38,37 +38,71 @@ function shellDome(rx,rz,height,baseY){
  for(let i=0;i<rings;i++)for(let j=0;j<steps;j++){const a=i*(steps+1)+j,b=a+steps+1;idx.push(a,a+1,b,a+1,b+1,b);}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g;
 }
-function buildDetailedTurtle(body,skin,light,dark,traits){
- const shell=MAT('#718e4c',.34),scute=MAT('#91a85c',.40),seam=MAT('#405b37',.62),belly=MAT('#b8a36b',.72);
- ball(body,skin,[0,.55,-.02],[.61,.32,.82]);ball(body,belly,[0,.39,-.03],[.57,.12,.77]);
- mesh(body,shellDome(.82,.98,.63,.76),shell,[0,0,0],[1,1,1]);
- const lip=mesh(body,new THREE.TorusGeometry(.79,.075,18,100),belly,[0,.77,-.02],[1,1,1]);lip.rotation.x=Math.PI/2;lip.scale.set(1,1.22,1);
- const plates=[[0,0],[.36,0],[-.36,0],[0,.48],[0,-.48],[.30,.38],[-.30,.38],[.30,-.38],[-.30,-.38]];
- plates.forEach(([x,z],i)=>{const q=Math.min(.94,Math.sqrt((x/.82)**2+(z/.98)**2)),y=.76+.63*Math.sqrt(Math.max(.03,1-q*q));ball(body,i%3===0?scute:shell,[x,y+.018,z],[i===0?.27:.205,.027,i===0?.30:.19]);ball(body,seam,[x,y+.041,z],[i===0?.235:.177,.009,i===0?.26:.165]);});
- for(const side of [-1,1])for(let i=0;i<5;i++)ball(body,scute,[side*.73,.84,-.72+i*.36],[.13,.105,.17],[0,0,side*.22]);
- // Four broad, jointed legs, toes and dark keratin claws.
- for(const x of [-.53,.53])for(const z of [-.55,.55]){
-  const leg=new THREE.Group();leg.position.set(x,.48,z);body.add(leg);
-  ball(leg,skin,[0,-.12,0],[.20,.25,.25],[.2,0,x*.2]);ball(leg,skin,[x*.10,-.28,.12],[.23,.14,.28]);
-  for(let t=-1;t<=1;t++){ball(leg,skin,[t*.13,-.30,.32],[.075,.075,.19]);cone(leg,dark,[t*.13,-.31,.47],.045,.16,[Math.PI/2,0,0]);}
-  for(let n=0;n<3;n++)ball(leg,light,[x>0?.18:-.18,-.06-n*.11,.08],[.035,.045,.055]);
+function turtleTexture(base,amount=28){
+ const c=document.createElement('canvas');c.width=c.height=512;
+ const x=c.getContext('2d'),im=x.createImageData(512,512),h=base.slice(1);
+ const rgb=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16));
+ for(let y=0;y<512;y++)for(let z=0;z<512;z++){
+  const n=(Math.sin(z*.08+Math.sin(y*.03)*2)+Math.sin(y*.11+z*.02))*.25+(Math.random()-.5)*.3,k=n*amount,i=(y*512+z)*4;
+  for(let q=0;q<3;q++)im.data[i+q]=THREE.MathUtils.clamp(rgb[q]+k,0,255);
+  im.data[i+3]=255;
  }
- const neck=new THREE.Group();neck.position.set(0,.62,.62);body.add(neck);ball(neck,skin,[0,.02,.30],[.25,.24,.53],[-.24,0,0]);
- const head=new THREE.Group();head.position.set(0,.08,.72);neck.add(head);
- ball(head,skin,[0,0,.06],[.36,.30,.43]);ball(head,light,[0,-.16,.31],[.25,.105,.25]);ball(head,skin,[0,-.11,.39],[.22,.10,.20]);
- const eye=MAT(dark,.16),iris=MAT(traits.some(t=>t.id==='night_vision')?'#8df0c0':'#c99b55',.2);
- for(const x of [-.255,.255]){ball(head,eye,[x,.12,.30],[.095,.105,.07]);ball(head,iris,[x,.12,.355],[.052,.058,.025]);ball(head,eye,[x,.12,.378],[.025,.031,.012]);}
- for(const x of [-.12,.12])ball(head,dark,[x,.13,.43],[.035,.025,.025]);
- // Wing mutation is attached to the shoulder and changes the silhouette.
- if(traits.some(t=>t.id==='wings'))for(const side of [-1,1]){
-  const wing=new THREE.Group();wing.position.set(side*.55,1.25,-.20);wing.rotation.z=side*-.28;body.add(wing);
-  ball(wing,MAT('#aab8bd',.82),[side*.27,.03,0],[.34,.12,.30]);
-  for(let i=0;i<7;i++){const t=i/6;ball(wing,MAT(i%2?'#d0d8d8':'#819aa2',.86),[side*(.34+t*.38),-.02,-.12-t*.12],[.12,.055,.34-t*.08],[.10,0,side*.16]);}
-  ball(wing,MAT('#d9e0dc',.84),[side*.18,.08,.10],[.20,.06,.22]);
- }
- if(traits.some(t=>t.id==='armor'))for(let i=0;i<3;i++)cone(body,seam,[0,1.24,-.48+i*.35],.12,.30);
+ x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
 }
-
+function turtleScute(parent,cx,cz,rx,rz,mat,seed){
+ const pts=[],n=7;
+ for(let i=0;i<n;i++){const a=i/n*Math.PI*2,r=1+Math.sin(i*8+seed)*.08;pts.push([cx+Math.cos(a)*rx*r,cz+Math.sin(a)*rz*r]);}
+ const y=(x,z)=>.76+.63*Math.sqrt(Math.max(.02,1-(x/.82)**2-(z/.98)**2))+.009;
+ const v=[cx,y(cx,cz),cz];pts.forEach(p=>v.push(p[0],y(...p),p[1]));
+ const ix=[];for(let i=0;i<n;i++)ix.push(0,i+1,(i+1)%n+1);
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setIndex(ix);g.computeVertexNormals();
+ const m=new THREE.Mesh(g,mat);m.castShadow=true;m.receiveShadow=true;parent.add(m);
+ const curve=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p[0],y(...p)+.002,p[1])),true);
+ parent.add(new THREE.Mesh(new THREE.TubeGeometry(curve,48,.006,5,true),MAT('#49321f',.78)));
+}
+function buildDetailedTurtle(body,skin,light,dark,traits){
+ const st=turtleTexture('#80603d',42),kt=turtleTexture('#89966b',30);
+ const hide=new THREE.MeshStandardMaterial({color:'#aab786',map:kt,bumpMap:kt,bumpScale:.035,roughness:.94});
+ const carapace=new THREE.MeshStandardMaterial({color:'#987248',map:st,bumpMap:st,bumpScale:.065,roughness:.62});
+ const colors=['#a77f4d','#8d673e','#b28a55','#987044','#785638'];
+ const scutes=colors.map(c=>new THREE.MeshStandardMaterial({color:c,map:st,bumpMap:st,bumpScale:.045,roughness:.64}));
+ const belly=MAT('#c4a875',.88),seam=MAT('#493a29',.9),claw=MAT('#594735',.52);
+ ball(body,hide,[0,.54,-.03],[.65,.30,.82]);
+ ball(body,belly,[0,.39,-.03],[.59,.10,.75]);
+ mesh(body,shellDome(.82,.98,.63,.76),carapace,[0,0,0],[1,1,1]);
+ const rim=new THREE.Mesh(new THREE.TorusGeometry(.79,.052,16,112),belly);rim.rotation.x=Math.PI/2;rim.scale.set(1,1.22,1);rim.position.set(0,.77,-.02);body.add(rim);
+ // Individual keratin scutes follow the curved shell surface.
+ [-.68,-.34,0,.34,.68].forEach((z,i)=>turtleScute(body,0,z,.17,.19,scutes[i%5],i));
+ for(const side of [-1,1])for(let i=0;i<4;i++)turtleScute(body,side*(i===0||i===3?.43:.49),-.57+i*.38,.18,.19,scutes[(i+(side>0?2:0))%5],i+side*4);
+ for(let i=0;i<14;i++){const a=i/14*Math.PI*2,x=Math.cos(a)*.75,z=Math.sin(a)*.91,y=.76+.63*Math.sqrt(Math.max(.02,1-(x/.82)**2-(z/.98)**2));ball(body,scutes[i%5],[x,y-.02,z],[.09,.045,.12],[0,-a,0]);}
+ // Thick, splayed legs with folded skin, individual toes and dark nails.
+ for(const side of [-1,1])for(const front of [-1,1]){
+  const leg=new THREE.Group();leg.position.set(side*.49,.48,front*.52);leg.rotation.z=side*.12;body.add(leg);
+  ball(leg,hide,[side*.04,-.13,front*.03],[.20,.25,.27],[.12*front,0,side*.1]);
+  ball(leg,hide,[side*.10,-.30,front*.17],[.23,.14,.30]);
+  for(let j=0;j<3;j++){const r=new THREE.Mesh(new THREE.TorusGeometry(.17-j*.012,.009,6,24),MAT('#718052',.96));r.rotation.x=Math.PI/2;r.position.set(0,-.12-j*.08,0);leg.add(r);}
+  for(let t=-1;t<=1;t++){ball(leg,hide,[side*.1+t*.10,-.34,front*.38],[.07,.07,.16]);cone(leg,claw,[side*.1+t*.10,-.345,front*.51],.032,.10,[Math.PI/2,0,0]);}
+  for(let k=0;k<8;k++){const ang=k*2.4;ball(leg,scutes[k%5],[side*.05+Math.cos(ang)*.16,-.04-(k%4)*.07,front*.08+Math.sin(ang)*.14],[.035,.03,.045]);}
+ }
+ const neck=new THREE.Group();neck.position.set(0,.57,.58);body.add(neck);
+ ball(neck,hide,[0,0,.27],[.22,.19,.46],[-.2,0,0]);
+ const head=new THREE.Group();head.position.set(0,0,.61);neck.add(head);
+ ball(head,hide,[0,0,.10],[.28,.22,.36]);
+ ball(head,hide,[0,-.07,.33],[.21,.12,.22]);
+ const iris=MAT('#8b7042',.42),pupil=MAT('#171711',.18);
+ for(const side of [-1,1]){
+  ball(head,iris,[side*.22,.10,.20],[.055,.055,.04]);
+  ball(head,pupil,[side*.235,.10,.23],[.025,.03,.016]);
+  ball(head,dark,[side*.075,.015,.50],[.012,.01,.01]);
+ }
+ tube(head,[[-.12,-.11,.42],[0,-.14,.46],[.12,-.11,.42]],.007,dark);
+ if(traits.some(t=>t.id==='wings'))for(const side of [-1,1]){
+  const wing=new THREE.Group();wing.position.set(side*.52,1.05,-.2);wing.rotation.z=side*-.24;body.add(wing);
+  ball(wing,MAT('#aab8bd',.9),[side*.25,.02,0],[.30,.075,.25]);
+  for(let i=0;i<8;i++){const t=i/7;ball(wing,MAT(i%2?'#d0d8d8':'#819aa2',.92),[side*(.28+t*.34),-.015,-.10-t*.10],[.09,.035,.27-t*.06],[.08,0,side*.12]);}
+ }
+ if(traits.some(t=>t.id==='armor'))for(let i=0;i<3;i++)cone(body,seam,[0,1.24,-.48+i*.35],.09,.22);
+}
 function buildAnimal(data){
  const id=data.baseAnimalId||'fox', p=palettes[id]||palettes.fox;
  const fur=MAT(p[0]), light=MAT(p[1]), dark=MAT(p[2]), shell=MAT('#718b4c'), shellDark=MAT('#354d35');
