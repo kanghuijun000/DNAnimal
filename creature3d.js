@@ -222,6 +222,7 @@ function init(){
   animate();loading.style.display='none';
  }catch(err){loading.textContent='이 기기에서 3D 모델을 표시할 수 없습니다.';console.error(err);}
 }
+window.dnanimalZoom=(delta)=>{zoom=THREE.MathUtils.clamp(zoom+delta,.72,1.55);};
 function resize(){
  if(!renderer||!canvas.parentElement)return;
  const w=canvas.parentElement.clientWidth,h=canvas.parentElement.clientHeight;
