@@ -31,6 +31,44 @@ function addEyes(head,dark,glow=false){
  const eye=MAT(dark,.25),iris=MAT(glow?'#8df0c0':'#d8b46c',.25,.05);
  for(const x of [-.22,.22]){ball(head,eye,[x,.13,.31],[.085,.095,.06]);ball(head,iris,[x,.13,.36],[.035,.04,.025]);}
 }
+
+function shellDome(rx,rz,height,baseY){
+ const v=[],uv=[],idx=[],rings=30,steps=88;
+ for(let i=0;i<=rings;i++){const t=i/rings*Math.PI/2;for(let j=0;j<=steps;j++){const a=j/steps*Math.PI*2;v.push(Math.cos(a)*Math.sin(t)*rx,baseY+Math.cos(t)*height,Math.sin(a)*Math.sin(t)*rz);uv.push(j/steps,i/rings);}}
+ for(let i=0;i<rings;i++)for(let j=0;j<steps;j++){const a=i*(steps+1)+j,b=a+steps+1;idx.push(a,a+1,b,a+1,b+1,b);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g;
+}
+function buildDetailedTurtle(body,skin,light,dark,traits){
+ const shell=MAT('#718e4c',.34),scute=MAT('#91a85c',.40),seam=MAT('#405b37',.62),belly=MAT('#b8a36b',.72);
+ ball(body,skin,[0,.55,-.02],[.61,.32,.82]);ball(body,belly,[0,.39,-.03],[.57,.12,.77]);
+ mesh(body,shellDome(.82,.98,.63,.76),shell,[0,0,0],[1,1,1]);
+ const lip=mesh(body,new THREE.TorusGeometry(.79,.075,18,100),belly,[0,.77,-.02],[1,1,1]);lip.rotation.x=Math.PI/2;lip.scale.set(1,1.22,1);
+ const plates=[[0,0],[.36,0],[-.36,0],[0,.48],[0,-.48],[.30,.38],[-.30,.38],[.30,-.38],[-.30,-.38]];
+ plates.forEach(([x,z],i)=>{const q=Math.min(.94,Math.sqrt((x/.82)**2+(z/.98)**2)),y=.76+.63*Math.sqrt(Math.max(.03,1-q*q));ball(body,i%3===0?scute:shell,[x,y+.018,z],[i===0?.27:.205,.027,i===0?.30:.19]);ball(body,seam,[x,y+.041,z],[i===0?.235:.177,.009,i===0?.26:.165]);});
+ for(const side of [-1,1])for(let i=0;i<5;i++)ball(body,scute,[side*.73,.84,-.72+i*.36],[.13,.105,.17],[0,0,side*.22]);
+ // Four broad, jointed legs, toes and dark keratin claws.
+ for(const x of [-.53,.53])for(const z of [-.55,.55]){
+  const leg=new THREE.Group();leg.position.set(x,.48,z);body.add(leg);
+  ball(leg,skin,[0,-.12,0],[.20,.25,.25],[.2,0,x*.2]);ball(leg,skin,[x*.10,-.28,.12],[.23,.14,.28]);
+  for(let t=-1;t<=1;t++){ball(leg,skin,[t*.13,-.30,.32],[.075,.075,.19]);cone(leg,dark,[t*.13,-.31,.47],.045,.16,[Math.PI/2,0,0]);}
+  for(let n=0;n<3;n++)ball(leg,light,[x>0?.18:-.18,-.06-n*.11,.08],[.035,.045,.055]);
+ }
+ const neck=new THREE.Group();neck.position.set(0,.62,.62);body.add(neck);ball(neck,skin,[0,.02,.30],[.25,.24,.53],[-.24,0,0]);
+ const head=new THREE.Group();head.position.set(0,.08,.72);neck.add(head);
+ ball(head,skin,[0,0,.06],[.36,.30,.43]);ball(head,light,[0,-.16,.31],[.25,.105,.25]);ball(head,skin,[0,-.11,.39],[.22,.10,.20]);
+ const eye=MAT(dark,.16),iris=MAT(traits.some(t=>t.id==='night_vision')?'#8df0c0':'#c99b55',.2);
+ for(const x of [-.255,.255]){ball(head,eye,[x,.12,.30],[.095,.105,.07]);ball(head,iris,[x,.12,.355],[.052,.058,.025]);ball(head,eye,[x,.12,.378],[.025,.031,.012]);}
+ for(const x of [-.12,.12])ball(head,dark,[x,.13,.43],[.035,.025,.025]);
+ // Wing mutation is attached to the shoulder and changes the silhouette.
+ if(traits.some(t=>t.id==='wings'))for(const side of [-1,1]){
+  const wing=new THREE.Group();wing.position.set(side*.55,1.25,-.20);wing.rotation.z=side*-.28;body.add(wing);
+  ball(wing,MAT('#aab8bd',.82),[side*.27,.03,0],[.34,.12,.30]);
+  for(let i=0;i<7;i++){const t=i/6;ball(wing,MAT(i%2?'#d0d8d8':'#819aa2',.86),[side*(.34+t*.38),-.02,-.12-t*.12],[.12,.055,.34-t*.08],[.10,0,side*.16]);}
+  ball(wing,MAT('#d9e0dc',.84),[side*.18,.08,.10],[.20,.06,.22]);
+ }
+ if(traits.some(t=>t.id==='armor'))for(let i=0;i<3;i++)cone(body,seam,[0,1.24,-.48+i*.35],.12,.30);
+}
+
 function buildAnimal(data){
  const id=data.baseAnimalId||'fox', p=palettes[id]||palettes.fox;
  const fur=MAT(p[0]), light=MAT(p[1]), dark=MAT(p[2]), shell=MAT('#718b4c'), shellDark=MAT('#354d35');
@@ -40,13 +78,7 @@ function buildAnimal(data){
  body.scale.setScalar(scale);
  const isBird=id==='eagle',isTurtle=id==='turtle',isCroc=id==='croc',isElephant=id==='elephant';
  if(isTurtle){
-  ball(body,skin,[0,.58,0],[.68,.34,.88]);
-  ball(body,shell,[0,.82,-.02],[.78,.52,.94]);
-  ball(body,shellDark,[0,.77,-.02],[.80,.13,.96]);
-  for(let a=0;a<8;a++){const ang=a*Math.PI/4;const rib=ball(body,light,[Math.cos(ang)*.48,.96,Math.sin(ang)*.57],[.045,.018,.30],[0,-ang,0]);}
-  ball(body,skin,[0,.58,.91],[.32,.28,.42]);
-  for(const x of [-.48,.48])for(const z of [-.52,.52]){ball(body,skin,[x,.36,z],[.22,.26,.3]);}
-  ball(body,skin,[0,.50,-.90],[.12,.12,.28]);
+  buildDetailedTurtle(body,skin,light,dark,data.traits||[]);
  }else if(isCroc){
   ball(body,skin,[0,.52,-.08],[.48,.35,1.25]);
   ball(body,skin,[0,.48,.95],[.35,.20,.78]);
@@ -101,7 +133,7 @@ function buildAnimal(data){
  // Trait-driven anatomy: these are real meshes attached to the base animal, not replacement icons.
  const traits=data.traits||[];
  const has=id=>traits.some(t=>t.id===id);
- if(has('wings')&&!isBird){
+ if(has('wings')&&!isBird&&!isTurtle){
   for(const side of [-1,1]){
    const wing=new THREE.Group();wing.position.set(side*.35,1.02,-.12);wing.rotation.z=side*-.12;body.add(wing);
    ball(wing,MAT('#8e9eaa'),[side*.42,.05,0],[.53,.13,.42],[0,0,side*.16]);
@@ -132,14 +164,14 @@ function buildAnimal(data){
 function init(){
  try{
   renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'low-power'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
   scene=new THREE.Scene();scene.background=null;
-  camera=new THREE.PerspectiveCamera(35,1,.1,100);camera.position.set(3.8,2.7,5.2);
+  camera=new THREE.PerspectiveCamera(32,1,.1,100);camera.position.set(3.8,2.7,5.2);
   scene.add(new THREE.HemisphereLight('#e6f4df','#25352b',2.0));
-  const key=new THREE.DirectionalLight('#fff0d4',3.0);key.position.set(3,6,4);key.castShadow=true;scene.add(key);
+  const key=new THREE.DirectionalLight('#fff0d4',3.0);key.position.set(3,6,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
   const rim=new THREE.DirectionalLight('#91dcae',2.1);rim.position.set(-4,3,-3);scene.add(rim);
   stage=new THREE.Group();scene.add(stage);
   const floor=new THREE.Mesh(new THREE.CircleGeometry(2.2,64),new THREE.MeshStandardMaterial({color:'#263a2c',roughness:1,transparent:true,opacity:.72}));
@@ -171,7 +203,7 @@ function animate(){
  frame=requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.04);
  if(model){if(autoRotate)targetRotation+=dt*.28;model.rotation.y+=(targetRotation-model.rotation.y)*.08;model.rotation.x+=(targetTilt-model.rotation.x)*.08;}
- if(camera){camera.position.set(3.8/zoom,2.7/zoom,5.2/zoom);camera.lookAt(0,.68,0);}
+ if(camera){const d=5.4/zoom;camera.position.set(d*.62,d*.43,d*.88);camera.lookAt(0,.78,0);}
  renderer?.render(scene,camera);
 }
 init();
