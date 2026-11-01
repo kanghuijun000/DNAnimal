@@ -67,7 +67,7 @@ function renderHome(){
 }
 function archiveMini(c){return `<button class="archive-card" data-detail="${c.id}"><div class="archive-card-art">${c.emoji}</div><div class="archive-card-info"><strong>${escapeHTML(c.name)}</strong><small>${escapeHTML(c.speciesName)}</small><span class="tagline">생존 ${Math.floor(c.survivalDays)}일</span></div></button>`;}
 function renderCreate(){
- selectedAnimal='fox';selectedHabitat='savanna';customStart=null;
+ selectedAnimal='fox';selectedHabitat='savanna';
  $('creatureName').value='';
  const cards=ANIMALS.map(a=>`<button class="choice-card ${a.id===selectedAnimal?'selected':''}" data-animal="${a.id}"><span class="animal-emoji">${a.emoji}</span><strong>${a.name}</strong><small>평균 수명 약 ${a.life}년</small></button>`).join('');
  const custom=db.archive.filter(c=>c.speciesId).slice().reverse().filter((c,i,a)=>a.findIndex(x=>x.speciesId===c.speciesId)===i);
@@ -186,9 +186,9 @@ function showDetail(id){const c=db.archive.find(x=>x.id===id);if(!c)return;$('de
 function startFromArchive(id){const c=db.archive.find(x=>x.id===id);if(!c)return;customStart={speciesName:c.speciesName,speciesId:c.speciesId,baseAnimalId:c.baseAnimalId,baseAnimalName:c.baseAnimalName,emoji:c.emoji,life:c.life,stats:{...c.stats},traits:c.traits.map(t=>({...t}))};renderCreate();showScreen('createScreen');}
 function openCreature(id){const c=db.active.find(x=>x.id===id);if(!c)return;renderCreature(c);showScreen('creatureScreen');}
 function bind(){
- $('newLifeBtn').addEventListener('click',()=>{renderCreate();showScreen('createScreen');});$('createCreatureBtn').addEventListener('click',createCreature);
+ $('newLifeBtn').addEventListener('click',()=>{customStart=null;renderCreate();showScreen('createScreen');});$('createCreatureBtn').addEventListener('click',createCreature);
  document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.go)));
- document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.nav==='createScreen')renderCreate();showScreen(b.dataset.nav);}));
+ document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.nav==='createScreen'){customStart=null;renderCreate();}showScreen(b.dataset.nav);}));
  $('openArchiveBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('creatureHomeBtn').addEventListener('click',()=>showScreen('homeScreen'));
  $('moveHabitatBtn').addEventListener('click',openMove);$('closeMoveBtn').addEventListener('click',()=>closeModal('moveModal'));$('closeDetailBtn').addEventListener('click',()=>closeModal('detailModal'));$('eventContinueBtn').addEventListener('click',()=>closeModal('eventModal'));
  $('resultHomeBtn').addEventListener('click',()=>showScreen('homeScreen'));$('resultArchiveBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('newFromSpeciesBtn').addEventListener('click',()=>startFromArchive(lastDeadId));
