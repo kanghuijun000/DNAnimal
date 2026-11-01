@@ -247,25 +247,68 @@ function disposeModel(){
  model.traverse(o=>{if(o.geometry&&o.geometry!==sphereGeo)o.geometry.dispose();if(o.material){for(const m of (Array.isArray(o.material)?o.material:[o.material]))m.dispose();}});
  model=null;
 }
+const REAL_ANIMAL_MODELS = {
+ // Grab3D high-detail CC0 assets. The lightweight GLBs retain hundreds of
+ // thousands of triangles and PBR textures while remaining more practical on phones.
+ lion: 'https://grab3d.com/dl/lion/lion-light.glb',
+ elephant: 'https://grab3d.com/dl/elephant/elephant-light.glb',
+ tiger: 'https://grab3d.com/dl/white-tiger/white-tiger-light.glb',
+ turtle: 'https://files.innerscene.com/library/hermann-s-tortoise-88ac8979/f6d26983828908b7edab/hermann-s-tortoise.glb'
+};
+function prepareRealModel(gltf, token, data){
+ if(token!==renderToken)return;
+ model=gltf.scene;
+ const box=new THREE.Box3().setFromObject(model);
+ const size=box.getSize(new THREE.Vector3());
+ const center=box.getCenter(new THREE.Vector3());
+ const maxDim=Math.max(size.x,size.y,size.z)||1;
+ const scale=2.35/maxDim;
+ model.scale.setScalar(scale);
+ model.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
+ model.traverse(o=>{
+  if(!o.isMesh)return;
+  o.castShadow=true;o.receiveShadow=true;
+  if(o.material){
+   const mats=Array.isArray(o.material)?o.material:[o.material];
+   mats.forEach(m=>{
+    // Preserve the downloaded animal's authored PBR textures and colors.
+    if(m.roughness===undefined)m.roughness=.78;
+    m.needsUpdate=true;
+   });
+  }
+ });
+ stage.add(model);
+ if(loading)loading.style.display='none';
+}
 function render(data){
  if(!scene)return;
  const token=++renderToken;disposeModel();
- const showProcedural=()=>{if(token!==renderToken)return;model=buildAnimal(data);model.position.y=.02;stage.add(model);if(loading)loading.style.display='none';};
- if((data.baseAnimalId||'')==='turtle'){
-  loading.style.display='block';loading.textContent='고품질 거북이 모델 불러오는 중…';
-  gltfLoader.load('https://files.innerscene.com/library/hermann-s-tortoise-88ac8979/f6d26983828908b7edab/hermann-s-tortoise.glb',gltf=>{
-   if(token!==renderToken)return;
-   model=gltf.scene;
-   const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-   const scale=2.35/Math.max(size.x,size.y,size.z);model.scale.setScalar(scale);
-   model.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
-   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.roughness=Math.max(.35,o.material.roughness??.7);}}});
-   stage.add(model);loading.style.display='none';
-  },undefined,err=>{console.warn('Photoreal turtle asset unavailable; using procedural fallback.',err);showProcedural();});
-  // Never leave the user on an endless loading screen if the remote asset stalls.
-  setTimeout(()=>{if(token===renderToken&&!model)showProcedural();},9000);
- }else showProcedural();
  targetRotation=0;targetTilt=0;zoom=1;autoRotate=true;
+ const species=data.baseAnimalId||'';
+ const asset=REAL_ANIMAL_MODELS[species];
+ if(!asset){
+  if(loading)loading.style.display='none';
+  model=buildAnimal(data);model.position.y=.02;stage.add(model);
+  return;
+ }
+ if(loading){loading.style.display='block';loading.textContent='실제 동물 고해상도 3D 모델 불러오는 중…';}
+ let settled=false;
+ const fail=err=>{
+  if(token!==renderToken||settled)return;
+  settled=true;
+  console.error('Real animal GLB failed to load:',species,err);
+  if(loading){loading.textContent='실제 3D 모델을 불러오지 못했습니다. 네트워크를 확인하고 다시 열어 주세요.';loading.style.display='block';}
+ };
+ gltfLoader.load(asset,gltf=>{
+  if(token!==renderToken)return;
+  settled=true;
+  prepareRealModel(gltf,token,data);
+ },undefined,fail);
+ // A stalled download must report an error, not silently replace a real animal
+ // with the old geometric toy model.
+ setTimeout(()=>{
+  if(token===renderToken&&!settled)fail(new Error('3D model download timed out'));
+ },20000);
 }
 function animate(){
  frame=requestAnimationFrame(animate);
