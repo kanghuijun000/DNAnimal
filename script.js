@@ -191,7 +191,7 @@ function bind(){
  document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.go)));
  document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.nav==='createScreen'){customStart=null;renderCreate();}showScreen(b.dataset.nav);}));
  $('openArchiveBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('creatureHomeBtn').addEventListener('click',()=>showScreen('homeScreen'));
- $('moveHabitatBtn').addEventListener('click',openMove);$('closeMoveBtn').addEventListener('click',()=>closeModal('moveModal'));$('closeDetailBtn').addEventListener('click',()=>closeModal('detailModal'));$('eventContinueBtn').addEventListener('click',()=>closeModal('eventModal'));
+ $('moveHabitatBtn').addEventListener('click',openMove);$('finishResearchBtn').addEventListener('click',()=>{const c=db.active.find(x=>x.id===selectedCreatureId);if(!c)return;if(!window.confirm('이 개체의 연구를 종료할까요?\n연구가 종료되면 사망 처리되어 전시관에 영구 기록됩니다.'))return;finishCreature(c,'연구자에 의한 연구 종료');});$('closeMoveBtn').addEventListener('click',()=>closeModal('moveModal'));$('closeDetailBtn').addEventListener('click',()=>closeModal('detailModal'));$('eventContinueBtn').addEventListener('click',()=>closeModal('eventModal'));
  $('resultHomeBtn').addEventListener('click',()=>showScreen('homeScreen'));$('resultArchiveBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('newFromSpeciesBtn').addEventListener('click',()=>startFromArchive(lastDeadId));
  $('archiveSearch').addEventListener('input',renderArchive);$('archiveSort').addEventListener('change',renderArchive);
  document.addEventListener('click',e=>{
