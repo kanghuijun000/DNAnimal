@@ -54,7 +54,7 @@ function turtleScute(parent,cx,cz,rx,rz,mat,seed){
  for(let i=0;i<n;i++){const a=i/n*Math.PI*2,r=1+Math.sin(i*8+seed)*.08;pts.push([cx+Math.cos(a)*rx*r,cz+Math.sin(a)*rz*r]);}
  const y=(x,z)=>.76+.63*Math.sqrt(Math.max(.02,1-(x/.82)**2-(z/.98)**2))+.009;
  const v=[cx,y(cx,cz),cz];pts.forEach(p=>v.push(p[0],y(...p),p[1]));
- const ix=[];for(let i=0;i<n;i++)ix.push(0,i+1,(i+1)%n+1);
+ const ix=[];for(let i=0;i<n;i++)ix.push(0,(i+1)%n+1,i+1);
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setIndex(ix);g.computeVertexNormals();
  const m=new THREE.Mesh(g,mat);m.castShadow=true;m.receiveShadow=true;parent.add(m);
  const curve=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p[0],y(...p)+.002,p[1])),true);
