@@ -252,6 +252,7 @@ const REAL_ANIMAL_MODELS = {
  // thousands of triangles and PBR textures while remaining more practical on phones.
  lion: 'https://grab3d.com/dl/lion/lion-light.glb',
  elephant: 'https://grab3d.com/dl/elephant/elephant-light.glb',
+ eagle: 'https://grab3d.com/dl/eagle/eagle-light.glb',
  tiger: 'https://grab3d.com/dl/white-tiger/white-tiger-light.glb',
  turtle: 'https://files.innerscene.com/library/hermann-s-tortoise-88ac8979/f6d26983828908b7edab/hermann-s-tortoise.glb'
 };
