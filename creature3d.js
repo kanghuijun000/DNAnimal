@@ -250,7 +250,7 @@ function disposeModel(){
 function render(data){
  if(!scene)return;
  const token=++renderToken;disposeModel();
- const showProcedural=()=>{if(token!==renderToken)return;model=buildAnimal(data);model.position.y=.02;stage.add(model);};
+ const showProcedural=()=>{if(token!==renderToken)return;model=buildAnimal(data);model.position.y=.02;stage.add(model);if(loading)loading.style.display='none';};
  if((data.baseAnimalId||'')==='turtle'){
   loading.style.display='block';loading.textContent='고품질 거북이 모델 불러오는 중…';
   gltfLoader.load('https://files.innerscene.com/library/hermann-s-tortoise-88ac8979/f6d26983828908b7edab/hermann-s-tortoise.glb',gltf=>{
@@ -261,7 +261,9 @@ function render(data){
    model.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
    model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.roughness=Math.max(.35,o.material.roughness??.7);}}});
    stage.add(model);loading.style.display='none';
-  },undefined,err=>{console.warn('Photoreal turtle asset unavailable; using procedural fallback.',err);loading.style.display='none';showProcedural();});
+  },undefined,err=>{console.warn('Photoreal turtle asset unavailable; using procedural fallback.',err);showProcedural();});
+  // Never leave the user on an endless loading screen if the remote asset stalls.
+  setTimeout(()=>{if(token===renderToken&&!model)showProcedural();},9000);
  }else showProcedural();
  targetRotation=0;targetTilt=0;zoom=1;autoRotate=true;
 }
