@@ -121,7 +121,7 @@ function buildAnimal(data){
  if(has('heat_resist')){ball(body,MAT('#c49a5c'),[0,.92,-.1],[.50,.05,.68]);}
  if(has('fat_layer'))ball(body,MAT('#c4b18b'),[0,.54,-.05],[.52,.38,.83]);
  if(has('claws')){for(const x of [-.4,.4])for(const z of [-.5,.5])cone(body,dark,[x,.22,z+.1],.07,.22,[Math.PI/2,0,0]);}
- if(has('long_legs')){body.children.filter(o=>o.position.y===0&&o.scale.y>.25).forEach(o=>o.scale.y*=1.35);}
+ if(has('long_legs')){body.children.filter(o=>o.isGroup&&o.position.y===0&&o.children.length>=2).forEach(o=>o.scale.y*=1.35);}
  if(has('large_ears'))for(const x of [-.35,.35])ball(body,light,[x,1.12,.70],[.16,.25,.08]);
  if(has('water_storage'))ball(body,MAT('#78a7a0'),[0,.55,-.1],[.49,.32,.82]);
  if(has('climbing'))for(const x of [-.4,.4])cone(body,dark,[x,.18,.4],.10,.32,[Math.PI/2,0,0]);
@@ -163,7 +163,7 @@ function resize(){
 }
 function render(data){
  if(!scene)return;
- if(model){stage.remove(model);model.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){for(const m of (Array.isArray(o.material)?o.material:[o.material]))m.dispose();}});}
+ if(model){stage.remove(model);model.traverse(o=>{if(o.geometry&&o.geometry!==sphereGeo)o.geometry.dispose();if(o.material){for(const m of (Array.isArray(o.material)?o.material:[o.material]))m.dispose();}});}
  model=buildAnimal(data);model.position.y=.02;stage.add(model);
  targetRotation=0;targetTilt=0;autoRotate=true;
 }
