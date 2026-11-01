@@ -146,10 +146,10 @@ function generateEvent(c,action){
  if(h.id==='desert')pool.push({w:9,v:{title:'수자원 부족',desc:'오랫동안 물을 찾지 못했다. 탈수로 건강이 악화됐다.',health:-12,impact:'건강 -12',icon:'☀'}});
  if(h.id==='tundra')pool.push({w:9,v:{title:'한파',desc:'갑작스러운 기온 하락으로 체온 유지가 어려워졌다.',health:has('thick_fur')||has('fat_layer')?-1:-12,impact:has('thick_fur')||has('fat_layer')?'특성으로 피해 완화':'건강 -12',icon:'❄'}});
  if(h.id==='jungle')pool.push({w:8,v:{title:'수풀 속 매복',desc:'빽빽한 수풀 속에서 포식자가 접근했다.',health:has('camouflage')?-2:-10,impact:has('camouflage')?'위장 특성으로 피해 완화':'건강 -10',icon:'🌿'}});
- if(h.id==='city')pool.push({w:8,v:{title:'도시의 먹이',desc:'인간 거주지 주변에서 새로운 먹이를 발견했다.',energy:18,impact:'에너지 +18',icon:'⌂'});
- if(h.id==='ocean')pool.push({w:10,v:{title:'강한 해류',desc:'강한 해류에 휩쓸렸다. 수중 이동 특성이 부족하면 큰 부담이 된다.',health:has('webbed_feet')||has('gills')?-2:-14,impact:has('webbed_feet')||has('gills')?'특성으로 피해 완화':'건강 -14',icon:'≈'});
+ if(h.id==='city')pool.push({w:8,v:{title:'도시의 먹이',desc:'인간 거주지 주변에서 새로운 먹이를 발견했다.',energy:18,impact:'에너지 +18',icon:'⌂'}});
+ if(h.id==='ocean')pool.push({w:10,v:{title:'강한 해류',desc:'강한 해류에 휩쓸렸다. 수중 이동 특성이 부족하면 큰 부담이 된다.',health:has('webbed_feet')||has('gills')?-2:-14,impact:has('webbed_feet')||has('gills')?'특성으로 피해 완화':'건강 -14',icon:'≈'}});
  if(c.stats.strength>80&&Math.random()<.12)pool.push({w:20,v:{title:'최상위 포식자의 지위',desc:'강력한 신체 능력으로 주변 경쟁자를 압도했다. 이 지역에서 최상위 포식자로 인정받기 시작했다.',health:5,energy:15,impact:'건강 +5 · 에너지 +15',icon:'♛'}});
- if(c.stats.speed>80&&Math.random()<.08)pool.push({w:12,v:{title:'위험을 앞선 도주',desc:'뛰어난 속도로 위협을 빠르게 벗어났다. 부상을 피했다.',health:5,impact:'건강 +5',icon:'↗'});
+ if(c.stats.speed>80&&Math.random()<.08)pool.push({w:12,v:{title:'위험을 앞선 도주',desc:'뛰어난 속도로 위협을 빠르게 벗어났다. 부상을 피했다.',health:5,impact:'건강 +5',icon:'↗'}});
  return weighted(pool);
 }
 function showEvent(e){$('eventSymbol').textContent=e.icon||'✧';$('eventType').textContent=e.type||'LIFE EVENT';$('eventTitle').textContent=e.title;$('eventDescription').textContent=e.desc;$('eventImpact').textContent=e.impact||'생애 기록이 갱신되었습니다.';openModal('eventModal');}
