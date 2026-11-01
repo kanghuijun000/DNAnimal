@@ -192,7 +192,7 @@ function bind(){
  $('openArchiveBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('creatureHomeBtn').addEventListener('click',()=>showScreen('homeScreen'));
  $('moveHabitatBtn').addEventListener('click',openMove);$('closeMoveBtn').addEventListener('click',()=>closeModal('moveModal'));$('closeDetailBtn').addEventListener('click',()=>closeModal('detailModal'));$('eventContinueBtn').addEventListener('click',()=>closeModal('eventModal'));
  $('resultHomeBtn').addEventListener('click',()=>showScreen('homeScreen'));$('resultArchiveBtn').addEventListener('click',()=>showScreen('archiveScreen'));$('newFromSpeciesBtn').addEventListener('click',()=>startFromArchive(lastDeadId));
- $('archiveSearch').addEventListener('input',renderArchive);$('archiveSort').addEventListener('change',renderArchive);$('soundToggle').addEventListener('click',()=>{soundOn=!soundOn;$('soundToggle').textContent=soundOn?'♫':'♪';$('soundToggle').title=soundOn?'효과음 켜짐':'효과음 꺼짐';});
+ $('archiveSearch').addEventListener('input',renderArchive);$('archiveSort').addEventListener('change',renderArchive);
  document.addEventListener('click',e=>{
   const a=e.target.closest('[data-animal]');if(a){selectedAnimal=a.dataset.animal;customStart=null;document.querySelectorAll('[data-animal]').forEach(x=>x.classList.toggle('selected',x===a));document.querySelectorAll('.custom-choice').forEach(x=>x.classList.remove('selected'));updateOriginPreview();return;}
   const h=e.target.closest('[data-habitat]');if(h){selectedHabitat=h.dataset.habitat;renderHabitatChoices();updateOriginPreview();return;}
