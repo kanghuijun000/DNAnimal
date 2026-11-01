@@ -85,6 +85,7 @@ function createCreature(){
  db.active.push(c);db.born=(db.born||0)+1;selectedCreatureId=c.id;save();renderCreature(c);showScreen('creatureScreen');
 }
 function renderCreature(c){
+ window.dispatchEvent(new CustomEvent('dnanimal:render-creature',{detail:{id:c.id,name:c.name,baseAnimalId:c.baseAnimalId,ageDays:c.ageDays,life:c.life,traits:c.traits||[],habitatId:c.habitatId}}));
  selectedCreatureId=c.id;const h=habitat(c.habitatId);$('creatureEmoji').textContent=c.emoji;$('creatureTitle').textContent=c.name;$('creatureSpeciesLabel').textContent=c.speciesName.toUpperCase()+' · CURRENT SPECIES';$('creatureMeta').textContent=h.name+' · '+Math.floor(c.survivalDays)+'일 생존';$('visualCaption').textContent=h.id.toUpperCase()+' / '+c.id.slice(-5).toUpperCase();
  const age=c.ageDays/365;$('ageValue').textContent=age.toFixed(1)+'세';$('lifeStage').textContent=age<1?'어린 개체':age<c.life*.18?'성장기':age<c.life*.7?'성체':age<c.life*.88?'노년기':'수명 말기';$('healthValue').textContent=Math.round(c.health)+'%';$('healthMeter').style.width=Math.max(0,c.health)+'%';$('energyValue').textContent=Math.round(c.energy)+'%';$('energyMeter').style.width=Math.max(0,c.energy)+'%';$('daysValue').textContent=Math.floor(c.survivalDays)+'일';
  $('traitCount').textContent=c.traits.length+'개';$('traitList').innerHTML=c.traits.length?c.traits.map(t=>`<span class="trait-chip" title="${escapeHTML(t.desc)}">${escapeHTML(t.name)}<small>${escapeHTML(t.origin||'')}</small></span>`).join(''):'<span class="no-traits">아직 특별한 변이 특성이 없습니다.</span>';
