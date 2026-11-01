@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
 const canvas = document.getElementById('creature3dCanvas');
 const loading = document.getElementById('modelLoading');
@@ -6,6 +7,8 @@ if (!canvas) throw new Error('3D canvas not found');
 
 let renderer, scene, camera, model, stage, frame = 0, autoRotate = true;
 let pointer = null, targetRotation = 0, targetTilt = 0, zoom = 1;
+const activePointers=new Map();let pinchStart=null,renderToken=0;
+const gltfLoader=new GLTFLoader();
 const clock = new THREE.Clock();
 const MAT = (color, roughness=.78, metalness=0) => new THREE.MeshStandardMaterial({color,roughness,metalness});
 const palettes = {
@@ -213,26 +216,54 @@ function init(){
   const ring=new THREE.Mesh(new THREE.TorusGeometry(1.48,.012,8,90),new THREE.MeshBasicMaterial({color:'#8dbb91',transparent:true,opacity:.36}));
   ring.rotation.x=Math.PI/2;ring.position.y=-.015;stage.add(ring);
   resize();new ResizeObserver(resize).observe(canvas.parentElement);
-  canvas.addEventListener('pointerdown',e=>{pointer={x:e.clientX,y:e.clientY,rot:targetRotation,tilt:targetTilt};canvas.setPointerCapture(e.pointerId);autoRotate=false;});
-  canvas.addEventListener('pointermove',e=>{if(!pointer)return;targetRotation=pointer.rot+(e.clientX-pointer.x)*.012;targetTilt=THREE.MathUtils.clamp(pointer.tilt+(e.clientY-pointer.y)*.006,-.25,.35);});
-  canvas.addEventListener('pointerup',()=>{pointer=null;});
-  canvas.addEventListener('pointercancel',()=>{pointer=null;});
-  canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=THREE.MathUtils.clamp(zoom+e.deltaY*.001,.72,1.55);},{passive:false});
+  canvas.style.touchAction='none';
+  canvas.addEventListener('pointerdown',e=>{
+   activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+   autoRotate=false;
+   if(activePointers.size===1){pointer={x:e.clientX,y:e.clientY,rot:targetRotation,tilt:targetTilt};pinchStart=null;}
+   else if(activePointers.size===2){const pts=[...activePointers.values()];pinchStart={distance:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y),zoom};pointer=null;}
+  });
+  canvas.addEventListener('pointermove',e=>{
+   if(!activePointers.has(e.pointerId))return;
+   activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(activePointers.size>=2&&pinchStart){const pts=[...activePointers.values()];const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);zoom=THREE.MathUtils.clamp(pinchStart.zoom*(d/Math.max(1,pinchStart.distance)),.62,2.4);return;}
+   if(pointer){targetRotation=pointer.rot+(e.clientX-pointer.x)*.012;targetTilt=THREE.MathUtils.clamp(pointer.tilt+(e.clientY-pointer.y)*.006,-.25,.35);}
+  });
+  const endPointer=e=>{activePointers.delete(e.pointerId);if(activePointers.size<2)pinchStart=null;if(activePointers.size===1){const p=[...activePointers.values()][0];pointer={x:p.x,y:p.y,rot:targetRotation,tilt:targetTilt};}else pointer=null;};
+  canvas.addEventListener('pointerup',endPointer);canvas.addEventListener('pointercancel',endPointer);canvas.addEventListener('lostpointercapture',endPointer);
+  canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=THREE.MathUtils.clamp(zoom*Math.exp(-e.deltaY*.001),.62,2.4);},{passive:false});
   window.addEventListener('dnanimal:render-creature',e=>render(e.detail));
   animate();loading.style.display='none';
  }catch(err){loading.textContent='이 기기에서 3D 모델을 표시할 수 없습니다.';console.error(err);}
 }
-window.dnanimalZoom=(delta)=>{zoom=THREE.MathUtils.clamp(zoom+delta,.72,1.55);};
 function resize(){
  if(!renderer||!canvas.parentElement)return;
  const w=canvas.parentElement.clientWidth,h=canvas.parentElement.clientHeight;
  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
 }
+function disposeModel(){
+ if(!model)return;stage.remove(model);
+ model.traverse(o=>{if(o.geometry&&o.geometry!==sphereGeo)o.geometry.dispose();if(o.material){for(const m of (Array.isArray(o.material)?o.material:[o.material]))m.dispose();}});
+ model=null;
+}
 function render(data){
  if(!scene)return;
- if(model){stage.remove(model);model.traverse(o=>{if(o.geometry&&o.geometry!==sphereGeo)o.geometry.dispose();if(o.material){for(const m of (Array.isArray(o.material)?o.material:[o.material]))m.dispose();}});}
- model=buildAnimal(data);model.position.y=.02;stage.add(model);
- targetRotation=0;targetTilt=0;autoRotate=true;
+ const token=++renderToken;disposeModel();
+ const showProcedural=()=>{if(token!==renderToken)return;model=buildAnimal(data);model.position.y=.02;stage.add(model);};
+ if((data.baseAnimalId||'')==='turtle'){
+  loading.style.display='block';loading.textContent='고품질 거북이 모델 불러오는 중…';
+  gltfLoader.load('https://files.innerscene.com/library/hermann-s-tortoise-88ac8979/f6d26983828908b7edab/hermann-s-tortoise.glb',gltf=>{
+   if(token!==renderToken)return;
+   model=gltf.scene;
+   const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+   const scale=2.35/Math.max(size.x,size.y,size.z);model.scale.setScalar(scale);
+   model.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
+   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.roughness=Math.max(.35,o.material.roughness??.7);}}});
+   stage.add(model);loading.style.display='none';
+  },undefined,err=>{console.warn('Photoreal turtle asset unavailable; using procedural fallback.',err);loading.style.display='none';showProcedural();});
+ }else showProcedural();
+ targetRotation=0;targetTilt=0;zoom=1;autoRotate=true;
 }
 function animate(){
  frame=requestAnimationFrame(animate);
