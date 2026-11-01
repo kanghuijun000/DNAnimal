@@ -48,7 +48,7 @@ const TRAITS = [
  {id:'thick_skin',name:'두꺼운 피부',desc:'마찰과 외부 손상에 대한 저항력이 높아진다.',type:'방어',stat:'defense',value:12}
 ];
 const STAT_NAMES={strength:'근력',speed:'속도',defense:'방어',senses:'감각',stamina:'지구력',adaptation:'환경 적응력'};
-let db=loadDB(),selectedAnimal='fox',selectedHabitat='savanna',selectedCreatureId=null,lastDeadId=null,customStart=null,currentActionOptions=[],soundOn=false;
+let db=loadDB(),selectedAnimal='fox',selectedHabitat='savanna',selectedCreatureId=null,lastDeadId=null,customStart=null,currentActionOptions=[];
 function loadDB(){try{return JSON.parse(localStorage.getItem(STORE))||{active:[],archive:[],born:0};}catch(e){return {active:[],archive:[],born:0};}}
 function save(){try{localStorage.setItem(STORE,JSON.stringify(db));$('saveIndicator').textContent='SAVED';setTimeout(()=>$('saveIndicator').textContent='LOCAL SAVE',1100);}catch(e){$('saveIndicator').textContent='SAVE ERROR';}}
 function uid(){return 'life-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);}
