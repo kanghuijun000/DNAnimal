@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101713">
+  <meta name="description" content="하나의 생명체를 탄생시키고 진화시키는 생명 시뮬레이션">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css?v=1">
+  <title>DNAnimal — Evolution Lab</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="DNAnimal 홈"><span class="brand-mark">D</span><span>DN<span class="brand-accent">Animal</span><small>EVOLUTION LAB</small></span></a>
+      <div class="top-actions"><span class="save-indicator" id="saveIndicator">LOCAL SAVE</span><button class="icon-button" id="soundToggle" aria-label="효과음 설정">♪</button></div>
+    </header>
+
+    <main>
+      <section id="homeScreen" class="screen active">
+        <div class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">LIFE BEGINS WITH A CHOICE</p>
+            <h1>생명의 다음 모습을<br><em>만들어 보세요.</em></h1>
+            <p class="hero-desc">동물을 선택하고 서식지를 정하세요. 당신의 선택과 예측할 수 없는 사건들이 하나의 생명체를 완전히 다른 존재로 바꿉니다.</p>
+            <button class="primary-button" id="newLifeBtn">새로운 생물 생성 <span>↗</span></button>
+          </div>
+          <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-core">✦</div><span class="orbit-dot dot-a"></span><span class="orbit-dot dot-b"></span><span class="orbit-dot dot-c"></span><span class="hero-label">LIFE<br>FORM 001</span></div>
+        </div>
+        <div class="section-heading"><div><p class="eyebrow">YOUR LABORATORY</p><h2>연구소 현황</h2></div><span class="subtle" id="collectionCount">전시 생물 0</span></div>
+        <div class="stats-grid">
+          <article class="stat-card"><span class="stat-icon">◉</span><span class="stat-label">탄생한 개체</span><strong id="bornCount">0</strong></article>
+          <article class="stat-card"><span class="stat-icon">✧</span><span class="stat-label">전시된 생물</span><strong id="deadCount">0</strong></article>
+          <article class="stat-card"><span class="stat-icon">⌁</span><span class="stat-label">발견한 종</span><strong id="speciesCount">0</strong></article>
+        </div>
+        <div class="section-heading"><div><p class="eyebrow">CONTINUE RESEARCH</p><h2>진행 중인 생명</h2></div></div>
+        <div id="activeList" class="active-list"></div>
+        <div class="section-heading"><div><p class="eyebrow">THE ARCHIVE</p><h2>최근 전시</h2></div><button class="text-button" id="openArchiveBtn">전시관 보기 →</button></div>
+        <div id="recentArchive" class="archive-strip"></div>
+      </section>
+
+      <section id="createScreen" class="screen">
+        <div class="page-heading"><button class="back-button" data-go="homeScreen">← 돌아가기</button><p class="eyebrow">CREATE A NEW LIFE</p><h1>새로운 생물 생성</h1><p>최초의 모습과 살아갈 환경을 선택하세요.</p></div>
+        <div class="form-section"><div class="section-heading"><div><p class="eyebrow">01 / SPECIES</p><h2>시작 동물 선택</h2></div><span class="subtle">하나 선택</span></div><div id="animalChoices" class="choice-grid animal-grid"></div></div>
+        <div class="form-section"><div class="section-heading"><div><p class="eyebrow">02 / HABITAT</p><h2>최초 서식지</h2></div><span class="subtle">하나 선택</span></div><div id="habitatChoices" class="choice-grid habitat-grid"></div></div>
+        <div class="form-section"><div class="section-heading"><div><p class="eyebrow">03 / IDENTITY</p><h2>이름 정하기</h2></div></div><label class="field-label" for="creatureName">개체 이름</label><input id="creatureName" class="text-input" maxlength="22" placeholder="예: 아르곤"><div id="originPreview" class="origin-preview"></div></div>
+        <button id="createCreatureBtn" class="primary-button full-button">나의 생물 생성하기 <span>↗</span></button>
+      </section>
+
+      <section id="creatureScreen" class="screen">
+        <div class="creature-header"><button class="back-button" id="creatureHomeBtn">← 연구소</button><span class="live-pill"><i></i> LIFE ACTIVE</span></div>
+        <div class="creature-hero">
+          <div class="creature-visual" id="creatureVisual"><div class="creature-emoji" id="creatureEmoji">🦊</div><div class="visual-caption" id="visualCaption">SAVANNA / 001</div></div>
+          <div class="creature-title"><p class="eyebrow" id="creatureSpeciesLabel">RED FOX · ORIGINAL SPECIES</p><h1 id="creatureTitle">이름</h1><p class="subtle" id="creatureMeta">사바나 · 0일 생존</p></div>
+        </div>
+        <div class="vitals-grid">
+          <div class="vital"><span>나이</span><strong id="ageValue">0.0세</strong><small id="lifeStage">어린 개체</small></div>
+          <div class="vital"><span>건강</span><strong id="healthValue">100%</strong><div class="meter"><i id="healthMeter"></i></div></div>
+          <div class="vital"><span>에너지</span><strong id="energyValue">100%</strong><div class="meter energy-meter"><i id="energyMeter"></i></div></div>
+          <div class="vital"><span>생존</span><strong id="daysValue">0일</strong><small>탄생 이후</small></div>
+        </div>
+        <div class="section-heading"><div><p class="eyebrow">EVOLUTION CHOICES</p><h2>다음 행동 선택</h2></div><span class="subtle">행동할 때마다 사건 발생</span></div>
+        <div id="actionChoices" class="action-grid"></div>
+        <div class="section-heading"><div><p class="eyebrow">CURRENT TRAITS</p><h2>보유 특성</h2></div><span class="subtle" id="traitCount">0개</span></div>
+        <div id="traitList" class="trait-list"></div>
+        <div class="section-heading"><div><p class="eyebrow">ENVIRONMENT</p><h2>서식지</h2></div><button class="text-button" id="moveHabitatBtn">서식지 이동 ↗</button></div>
+        <div class="habitat-current" id="currentHabitat"></div>
+        <div class="section-heading"><div><p class="eyebrow">LIFE JOURNAL</p><h2>최근 생애 기록</h2></div><span class="subtle" id="eventCount">0개 기록</span></div>
+        <div id="lifeJournal" class="journal-list"></div>
+      </section>
+
+      <section id="archiveScreen" class="screen">
+        <div class="page-heading"><button class="back-button" data-go="homeScreen">← 연구소</button><p class="eyebrow">THE COLLECTION</p><h1>생명체 전시관</h1><p>당신의 연구를 거쳐 생을 마감한 개체들의 기록입니다.</p></div>
+        <div class="archive-toolbar"><input id="archiveSearch" class="text-input" placeholder="이름 또는 종 검색"><select id="archiveSort" class="text-input"><option value="recent">최근 전시순</option><option value="longest">생존 기간순</option><option value="traits">특성 많은 순</option></select></div>
+        <div id="archiveGrid" class="archive-grid"></div>
+      </section>
+
+      <section id="resultScreen" class="screen">
+        <div class="result-top"><p class="eyebrow">LIFE COMPLETE</p><div class="result-symbol">✧</div><h1 id="resultName">아르곤</h1><p id="resultSubtitle" class="subtle">붉은여우 · 사바나</p><div class="death-cause" id="deathCause">사망 원인</div></div>
+        <div class="result-stats" id="resultStats"></div>
+        <div class="section-heading"><div><p class="eyebrow">LIFE STORY</p><h2>생애 기록</h2></div></div><div id="resultTimeline" class="journal-list"></div>
+        <div class="section-heading"><div><p class="eyebrow">FINAL FORM</p><h2>최종 보유 특성</h2></div></div><div id="resultTraits" class="trait-list"></div>
+        <div class="result-actions"><button class="primary-button" id="resultArchiveBtn">전시관에서 보기 <span>↗</span></button><button class="secondary-button" id="newFromSpeciesBtn">이 종으로 새 생물 생성</button><button class="text-button" id="resultHomeBtn">연구소로 돌아가기</button></div>
+      </section>
+    </main>
+    <nav class="bottom-nav"><button class="nav-item active" data-nav="homeScreen"><span>⌂</span>연구소</button><button class="nav-item" data-nav="createScreen"><span>＋</span>생물 생성</button><button class="nav-item" data-nav="archiveScreen"><span>▤</span>전시관</button></nav>
+  </div>
+
+  <div class="modal-backdrop" id="eventModal" role="dialog" aria-modal="true" aria-labelledby="eventTitle"><div class="modal-card event-card"><div class="event-symbol" id="eventSymbol">✧</div><p class="eyebrow" id="eventType">LIFE EVENT</p><h2 id="eventTitle">새로운 사건</h2><p id="eventDescription"></p><div class="event-impact" id="eventImpact"></div><button class="primary-button full-button" id="eventContinueBtn">계속하기</button></div></div>
+  <div class="modal-backdrop" id="moveModal" role="dialog" aria-modal="true" aria-labelledby="moveTitle"><div class="modal-card"><button class="modal-close" id="closeMoveBtn">×</button><p class="eyebrow">RELOCATION</p><h2 id="moveTitle">새로운 서식지 선택</h2><p class="subtle">이동은 자유롭지만 낯선 환경은 위험할 수 있습니다.</p><div id="moveChoices" class="choice-grid habitat-grid"></div></div></div>
+  <div class="modal-backdrop" id="detailModal" role="dialog" aria-modal="true"><div class="modal-card detail-card"><button class="modal-close" id="closeDetailBtn">×</button><div id="detailContent"></div></div></div>
+  <script src="./script.js?v=1"></script>
+  <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));</script>
+</body>
+</html>
